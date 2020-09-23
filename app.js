@@ -12,13 +12,15 @@ var Schedule = require('./models/schedule');
 var Availability = require('./models/availability');
 var Candidate = require('./models/candidate');
 var Comment = require('./models/comment');
-User.sync().then(() => {
+User.sync().then(() =>
+{
   Schedule.belongsTo(User, { foreignKey: 'createdBy' });
   Schedule.sync();
   Comment.belongsTo(User, { foreignKey: 'userId' });
   Comment.sync();
   Availability.belongsTo(User, { foreignKey: 'userId' });
-  Candidate.sync().then(() => {
+  Candidate.sync().then(() =>
+  {
     Availability.belongsTo(Candidate, { foreignKey: 'candidateId' });
     Availability.sync();
   });
@@ -29,11 +31,13 @@ var GitHubStrategy = require('passport-github2').Strategy;
 var GITHUB_CLIENT_ID = '2f831cb3d4aac02393aa';
 var GITHUB_CLIENT_SECRET = '9fbc340ac0175123695d2dedfbdf5a78df3b8067';
 
-passport.serializeUser(function (user, done) {
+passport.serializeUser(function (user, done)
+{
   done(null, user);
 });
 
-passport.deserializeUser(function (obj, done) {
+passport.deserializeUser(function (obj, done)
+{
   done(null, obj);
 });
 
@@ -43,12 +47,15 @@ passport.use(new GitHubStrategy({
   clientSecret: GITHUB_CLIENT_SECRET,
   callbackURL: 'http://localhost:8000/auth/github/callback'
 },
-  function (accessToken, refreshToken, profile, done) {
-    process.nextTick(function () {
+  function (accessToken, refreshToken, profile, done)
+  {
+    process.nextTick(function ()
+    {
       User.upsert({
         userId: profile.id,
         username: profile.username
-      }).then(() => {
+      }).then(() =>
+      {
         done(null, profile);
       });
     });
@@ -88,22 +95,38 @@ app.use('/schedules', commentsRouter);
 
 app.get('/auth/github',
   passport.authenticate('github', { scope: ['user:email'] }),
-  function (req, res) {
+  function (req, res)
+  {
   });
 
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/login' }),
-  function (req, res) {
-    res.redirect('/');
+  function (req, res)
+  {
+    var loginFrom = req.cookies.loginFrom;
+    // オープンリダイレクタ脆弱性対策
+    console.log(loginFrom);
+    if (loginFrom &&
+      !loginFrom.includes('http://') &&
+      !loginFrom.includes('https://'))
+    {
+      res.clearCookie('loginFrom');
+      res.redirect(loginFrom);
+    } else
+    {
+      res.redirect('/');
+    }
   });
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use(function (req, res, next)
+{
   next(createError(404));
 });
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res, next)
+{
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
